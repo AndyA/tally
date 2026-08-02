@@ -27,7 +27,7 @@ pub fn main(init: std.process.Init) !void {
             _ = try w.interface.write(msg[pos..][0..16]);
             print("{s}\n", .{msg[pos..][0..16]});
             try w.interface.flush();
-            init.io.sleep(.fromMilliseconds(200), .awake) catch {};
+            init.io.sleep(.fromMilliseconds(100), .awake) catch {};
         }
     }
 }
