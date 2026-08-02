@@ -4,6 +4,7 @@ const Io = std.Io;
 
 const serial = @import("serial");
 
+const ADDR = 1;
 const MESSAGE = "OK, ready, let's do it.  ";
 
 pub fn main(init: std.process.Init) !void {
@@ -23,11 +24,12 @@ pub fn main(init: std.process.Init) !void {
     const msg = MESSAGE ++ MESSAGE;
     while (true) {
         for (0..MESSAGE.len) |pos| {
-            _ = try w.interface.write("\x81\x30");
+            _ = try w.interface.writeByte(0x80 | ADDR);
+            _ = try w.interface.writeByte(0x30 | (@as(u8, @intCast(pos)) & 0x0f));
             _ = try w.interface.write(msg[pos..][0..16]);
             print("{s}\n", .{msg[pos..][0..16]});
             try w.interface.flush();
-            init.io.sleep(.fromMilliseconds(100), .awake) catch {};
+            init.io.sleep(.fromMilliseconds(250), .awake) catch {};
         }
     }
 }
