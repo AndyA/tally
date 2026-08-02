@@ -27,8 +27,8 @@ pub fn main(init: std.process.Init) !void {
             _ = try w.interface.writeByte(0x80 | ADDR);
             _ = try w.interface.writeByte(0x30 | (@as(u8, @intCast(pos)) & 0x0f));
             _ = try w.interface.write(msg[pos..][0..16]);
-            print("{s}\n", .{msg[pos..][0..16]});
             try w.interface.flush();
+            print("{s}\n", .{msg[pos..][0..16]});
             try init.io.sleep(.fromMilliseconds(250), .awake);
         }
     }
