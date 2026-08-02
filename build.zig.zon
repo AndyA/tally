@@ -1,0 +1,17 @@
+.{
+    .name = .tally,
+    .version = "0.0.0",
+    .fingerprint = 0xe8b6fe03f80b090a,
+    .minimum_zig_version = "0.16.0",
+    .dependencies = .{
+        .serial = .{
+            .url = "git+https://github.com/ZigEmbeddedGroup/serial#25b58d0ea62f7bfc33e6c147c1c02193a50c65fb",
+            .hash = "serial-0.0.1-PoeRzD66AACCQUHzsIssi6bOcEtnQFPebT6WLvno0I_p",
+        },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+}
