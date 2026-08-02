@@ -4,6 +4,8 @@ const Io = std.Io;
 
 const serial = @import("serial");
 
+const MESSAGE = "OK, ready, let's do it.  ";
+
 pub fn main(init: std.process.Init) !void {
     var w_buf: [32]u8 = undefined;
     var dev = try Io.Dir.cwd().openFile(init.io, "/dev/serial0", .{ .mode = .read_write });
@@ -18,6 +20,14 @@ pub fn main(init: std.process.Init) !void {
         .handshake = .none,
     });
 
-    _ = try w.interface.write("\x81\x300123456789abcdef");
-    try w.interface.flush();
+    const msg = MESSAGE ++ MESSAGE;
+    while (true) {
+        for (0..MESSAGE.len) |pos| {
+            _ = try w.interface.write("\x81\x30");
+            _ = try w.interface.write(msg[pos..][0..16]);
+            print("{s}\n", .{msg[pos..][0..16]});
+            try w.interface.flush();
+            init.io.sleep(.fromMilliseconds(200), .awake) catch {};
+        }
+    }
 }
