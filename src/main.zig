@@ -8,7 +8,13 @@ const serial = @import("serial");
 const ADDR = 1;
 const MESSAGE = "OK, ready, let's do it.  ";
 
-pub const Version = enum { @"3.1", @"4" };
+pub const Version = enum { @"3.1", @"4.0" };
+
+fn checkSum(bytes: []const u8) u8 {
+    var sum: u8 = 0;
+    for (bytes) |b| sum +%= b;
+    return sum & 0x7f;
+}
 
 pub fn Tally(comptime version: Version) type {
     return struct {
@@ -40,16 +46,16 @@ pub fn Tally(comptime version: Version) type {
 
         pub const VBC = switch (version) {
             .@"3.1" => void,
-            .@"4" => packed struct {
+            .@"4.0" => packed struct {
                 xdata_len: u4 = 2,
-                version_minor: u2 = 0,
+                version_minor: u3 = 0,
                 res7: u1 = 0,
             },
         };
 
         pub const ChkSum = switch (version) {
             .@"3.1" => void,
-            .@"4" => packed struct { sum: u7, res7: u1 = 0 },
+            .@"4.0" => packed struct { sum: u7, res7: u1 = 0 },
         };
 
         pub const Colour = enum(u2) {
@@ -61,9 +67,9 @@ pub fn Tally(comptime version: Version) type {
 
         pub const XData = switch (version) {
             .@"3.1" => void,
-            .@"4" => packed struct {
+            .@"4.0" => packed struct {
                 rh: Colour = .off,
-                txt: Colour = .off,
+                txt: Colour = .red,
                 lh: Colour = .off,
                 res6: u1 = 0,
                 res7: u1 = 0,
@@ -75,6 +81,10 @@ pub fn Tally(comptime version: Version) type {
             data: []const u8,
             tally: [4]bool = @splat(false),
             brightness: u2 = 3,
+            xdata: [2]XData = @splat(switch (version) {
+                .@"3.1" => {},
+                .@"4.0" => .{},
+            }),
 
             pub fn render(self: @This()) [MsgLen]u8 {
                 var msg: [MsgLen]u8 = @splat(' ');
@@ -88,6 +98,17 @@ pub fn Tally(comptime version: Version) type {
                 });
                 const len = @min(MsgLen, self.data.len);
                 @memcpy(msg[2..][0..len], self.data);
+
+                switch (version) {
+                    .@"3.1" => {},
+                    .@"4.0" => {
+                        msg[18] = checkSum(msg[0..18]);
+                        msg[19] = @bitCast(VBC{});
+                        msg[20] = @bitCast(self.xdata[0]);
+                        msg[21] = @bitCast(self.xdata[1]);
+                    },
+                }
+
                 return msg;
             }
         };
@@ -154,7 +175,7 @@ pub fn main(init: std.process.Init) !void {
             }
         }
     } else {
-        const UMD = Tally(.@"3.1");
+        const UMD = Tally(.@"4.0");
         const tally = try UMD.init(dev);
         try tally.send(init.io, .{
             .addr = 1,
